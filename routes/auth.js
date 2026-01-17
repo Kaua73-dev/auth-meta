@@ -1,58 +1,54 @@
 import passport from "passport";
-import "../auth/facebook.js";
 import {
-  getInstagramBusinessId,
-  getLongLivedToken
+  getLongLivedToken,
+  getInstagramBusinessId
 } from "../services/facebook.service.js";
 
-const authRoutes = (app) => {
-  
-  app.get('/auth/facebook',
-    passport.authenticate('facebook', {
-      scope: [
-        'public_profile',
-        'pages_show_list',
-        'pages_read_engagement',
-        'instagram_basic',
-        'instagram_manage_insights',
-        'instagram_content_publish'
-      ]
+export default function authRoutes(app) {
+
+  app.get(
+    "/auth/facebook",
+    passport.authenticate("facebook", {
+      scope: ["public_profile"]
     })
   );
 
- // Gera token EAA e isnstagram Business ID automaticamente
+
   app.get(
     "/auth/facebook/callback",
     passport.authenticate("facebook", { failureRedirect: "/error" }),
     async (req, res) => {
       try {
-        const shortLivedToken = req.user.accessToken;
-        const tokenEAA = await getLongLivedToken(shortLivedToken);
+        const shortToken = req.user.accessToken;
 
+     
+        const tokenEAA = await getLongLivedToken(shortToken);
 
-        const instagramData = await getInstagramBusinessId(tokenEAA);
+        let instagramBusinessId = null;
+        let pageId = null;
+        let message = "instagram business encontrado";
+
+        try {
+          const igData = await getInstagramBusinessId(tokenEAA);
+          instagramBusinessId = igData.instagramBusinessId;
+          pageId = igData.pageId;
+        } catch (err) {
+          message = "nenhuma conta instagram business vinculada a este facebook";
+        }
+
         return res.json({
-          token: tokenEAA,
-          instagramBusinessId: instagramData.instagramBusinessId
+          token_eaa: tokenEAA,
+          page_id: pageId,
+          instagram_business_id: instagramBusinessId,
+          has_instagram_business: !!instagramBusinessId,
+          message
         });
 
-      } catch (error) {
-        console.error('Erro:', error);
-        return res.status(500).json({
-          error: error.message,
-          details: 'Certifique-se de que sua página do Facebook está vinculada a uma conta Instagram Business'
+      } catch (err) {
+        return res.status(400).json({
+          error: err.message
         });
       }
     }
   );
-
-
-  app.get('/error', (req, res) => {
-    res.status(500).json({
-      error: 'Erro na autenticação com Facebook'
-    });
-  });
-
-};
-
-export default authRoutes;
+}
