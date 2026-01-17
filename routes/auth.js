@@ -7,7 +7,6 @@ import {
 
 const authRoutes = (app) => {
   
-  // Login com Facebook + Permissões do Instagram
   app.get('/auth/facebook',
     passport.authenticate('facebook', {
       scope: [
@@ -21,21 +20,17 @@ const authRoutes = (app) => {
     })
   );
 
-  // Callback - Gera token EAA e Instagram Business ID automaticamente
+ // Gera token EAA e isnstagram Business ID automaticamente
   app.get(
     "/auth/facebook/callback",
     passport.authenticate("facebook", { failureRedirect: "/error" }),
     async (req, res) => {
       try {
         const shortLivedToken = req.user.accessToken;
-
-        // Gerar token de longa duração (60 dias)
         const tokenEAA = await getLongLivedToken(shortLivedToken);
 
-        // Buscar Instagram Business ID
-        const instagramData = await getInstagramBusinessId(tokenEAA);
 
-        // Retornar token e ID
+        const instagramData = await getInstagramBusinessId(tokenEAA);
         return res.json({
           token: tokenEAA,
           instagramBusinessId: instagramData.instagramBusinessId
@@ -51,7 +46,7 @@ const authRoutes = (app) => {
     }
   );
 
-  // Página de erro
+
   app.get('/error', (req, res) => {
     res.status(500).json({
       error: 'Erro na autenticação com Facebook'

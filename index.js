@@ -7,7 +7,6 @@ import "dotenv/config";
 
 const app = express();
 
-// obrigatório para OAuth
 app.use(session({
   secret: "teste",
   resave: false,
@@ -16,11 +15,9 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
-
-// 🔥 REGISTRA TODAS AS ROTAS
 authRoutes(app);
 dashRoutes(app);
 
 app.listen(3000, () => {
-  console.log("🔥 Rodando em http://localhost:3000");
+  console.log(" Rodando em http://localhost:3000");
 });
